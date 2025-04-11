@@ -1,0 +1,85 @@
+import pandas as pd
+import numpy as np
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.preprocessing import LabelEncoder
+import joblib
+
+# Step 1: Generate Synthetic Data
+def generate_synthetic_data():
+    np.random.seed(42)
+    problems = ['System Crash', 'Slow Response', 'Data Loss', 'Connection Drop']
+    factors = ['High CPU Usage', 'Low Disk Space', 'Network Latency', 'Software Bug', 'Power Fluctuation']
+    root_causes = ['Hardware Failure', 'Software Bug', 'Network Issue', 'Configuration Error', 'Power Surge']
+
+    data = []
+    for _ in range(500):
+        problem = np.random.choice(problems)
+        factor = np.random.choice(factors)
+        if problem == 'System Crash' and factor in ['High CPU Usage', 'Power Fluctuation']:
+            root = 'Hardware Failure'
+        elif problem == 'Data Loss' and factor == 'Low Disk Space':
+            root = 'Configuration Error'
+        elif factor == 'Network Latency':
+            root = 'Network Issue'
+        elif factor == 'Software Bug':
+            root = 'Software Bug'
+        else:
+            root = np.random.choice(root_causes)
+
+        data.append([problem, factor, root])
+
+    df = pd.DataFrame(data, columns=['Problem', 'Observed_Factor', 'Root_Cause'])
+    df.to_excel("synthetic_data.xlsx", index=False)
+    return df
+
+# Step 2: Train Root Cause Classifier
+def train_model(df):
+    le_problem = LabelEncoder()
+    le_factor = LabelEncoder()
+    le_root = LabelEncoder()
+
+    df['Problem_Enc'] = le_problem.fit_transform(df['Problem'])
+    df['Factor_Enc'] = le_factor.fit_transform(df['Observed_Factor'])
+    df['Root_Enc'] = le_root.fit_transform(df['Root_Cause'])
+
+    X = df[['Problem_Enc', 'Factor_Enc']]
+    y = df['Root_Enc']
+
+    model = DecisionTreeClassifier(max_depth=4, random_state=42)
+    model.fit(X, y)
+
+    joblib.dump((model, le_problem, le_factor, le_root), "root_cause_model.pkl")
+
+# Step 3: Assistant Function
+def root_cause_assistant(problem_input, factor_input):
+    model, le_problem, le_factor, le_root = joblib.load("root_cause_model.pkl")
+
+    try:
+        problem_encoded = le_problem.transform([problem_input])[0]
+        factor_encoded = le_factor.transform([factor_input])[0]
+    except ValueError:
+        return "Unknown problem or factor. Please try again with known values."
+
+    prediction = model.predict([[problem_encoded, factor_encoded]])[0]
+    root_cause = le_root.inverse_transform([prediction])[0]
+
+    return f"Predicted Root Cause: {root_cause}"
+
+# Optional CLI
+if __name__ == "__main__":
+    print("Root Cause Analysis Assistant\n")
+
+    df = generate_synthetic_data()
+    train_model(df)
+
+    while True:
+        print("\nEnter 'exit' at any time to quit.")
+        problem = input("Describe the problem (e.g., 'System Crash'): ")
+        if problem.lower() == 'exit':
+            break
+        factor = input("Observed factor (e.g., 'High CPU Usage'): ")
+        if factor.lower() == 'exit':
+            break
+
+        result = root_cause_assistant(problem, factor)
+        print(result)
