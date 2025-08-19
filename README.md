@@ -81,11 +81,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 🤝 Contributing
 
 Contributions are welcome! Please fork the repo, make your changes, and submit a pull request.
-👨‍💻 Author
-
-
-📫 Connect with me on LinkedIn
-🌍 AI + ML + RCA Enthusiast | Geospatial + Climate Tech Developer
-
-
-Let me know if you’d like me to also generate a `LICENSE` file or convert this into a downloadable `.md` file
+👨‍💻 Author Name: Otutu Anslem
+Github: https://github.com/Otutu11
